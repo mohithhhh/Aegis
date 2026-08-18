@@ -5,10 +5,17 @@
 //! trust requirements — see docs/subscription-model.md for the full design and why the split is
 //! necessary:
 //!
-//! - **Funding leg** (`fund_subscription`) — driven by the payer's own privacy-pool transaction:
+//! - **Funding leg** (`privacy_invoke`) — driven by the payer's own privacy-pool transaction:
 //!   `withdraw` STRK to this contract, then `invoke` this entrypoint in the same transaction. Only
 //!   the pool contract may call it. This is the only leg that ever touches a payer's shielded
 //!   balance, so it's the only leg that needs the payer present.
+//!
+//!   The entrypoint is named `privacy_invoke` (not something more descriptive like
+//!   `fund_subscription`) because that name is not a choice: the wallet-standard's
+//!   `STRK20_INVOKE_ACTION` (`@starknet-io/types-js`) has no `entrypoint` field - it always
+//!   calls a contract's `privacy_invoke`, matching `StrkInvokeHelper` in
+//!   `contracts/echo-helper`. It always returns `Span<OpenNoteDeposit>`; this contract never
+//!   has any open note to fill, so it always returns an empty span.
 //! - **Release leg** (`execute_cycle`) — a plain, permissionless call. It moves already-escrowed
 //!   STRK to the merchant once a cycle is due. It carries no information about the payer, so
 //!   anyone (a keeper bot, the merchant, the subscriber) can call it safely — automating this leg
@@ -28,6 +35,17 @@ mod tests;
 pub trait IErc20<TState> {
     fn balance_of(self: @TState, account: ContractAddress) -> u256;
     fn transfer(ref self: TState, recipient: ContractAddress, amount: u256) -> bool;
+}
+
+// Must match privacy::objects::OpenNoteDeposit (positional Serde) - see
+// contracts/echo-helper/src/lib.cairo. `privacy_invoke` always returns an empty span of these
+// (this contract never fills an open note), but the return type still has to match what the
+// pool's InvokeExternal handling expects to decode.
+#[derive(Serde, Copy, Drop, PartialEq, Debug)]
+pub struct OpenNoteDeposit {
+    pub note_id: felt252,
+    pub token: ContractAddress,
+    pub amount: u128,
 }
 
 #[derive(Serde, Copy, Drop, PartialEq, Debug, starknet::Store)]
@@ -66,7 +84,11 @@ pub trait IAegisSubscriptionVault<TState> {
     /// `cycles_added` is 1 for a subscriber-initiated manual renewal, or N for a prepaid run.
     /// `cancel_commitment` is `poseidon_hash(secret)` for an optional self-serve refund path (see
     /// `cancel_subscription`); pass 0 to not offer one.
-    fn fund_subscription(
+    ///
+    /// Named `privacy_invoke`, not something more descriptive, because the wallet-standard's
+    /// `STRK20_INVOKE_ACTION` always calls that exact entrypoint name - see the module doc.
+    /// Always returns an empty span (never fills an open note).
+    fn privacy_invoke(
         ref self: TState,
         pool_address: ContractAddress, // wallet placeholder: "${poolAddress}"
         token: ContractAddress,
@@ -77,7 +99,7 @@ pub trait IAegisSubscriptionVault<TState> {
         cycles_added: u64,
         amount: u128,
         cancel_commitment: felt252,
-    );
+    ) -> Span<OpenNoteDeposit>;
 
     /// Release leg. Permissionless: pays `tier_amount` to `merchant` out of already-escrowed
     /// funds once a cycle is due. Never touches the privacy pool or a payer's shielded balance.
@@ -112,7 +134,7 @@ mod AegisSubscriptionVault {
         StoragePointerWriteAccess,
     };
     use starknet::{ContractAddress, get_block_timestamp, get_caller_address, get_contract_address};
-    use super::{IErc20Dispatcher, IErc20DispatcherTrait, Subscription, SubscriptionStatus};
+    use super::{IErc20Dispatcher, IErc20DispatcherTrait, OpenNoteDeposit, Subscription, SubscriptionStatus};
 
     pub mod errors {
         pub const BAD_POOL: felt252 = 'BAD_POOL';
@@ -131,7 +153,7 @@ mod AegisSubscriptionVault {
     struct Storage {
         subscriptions: Map<felt252, Subscription>,
         exists: Map<felt252, bool>,
-        // Sum of every subscription's `escrow_balance`. Used to sanity-check `fund_subscription`
+        // Sum of every subscription's `escrow_balance`. Used to sanity-check `privacy_invoke`
         // deposits against this contract's actual token balance — see the comment there.
         total_escrowed: u128,
         active_count: u64,
@@ -175,7 +197,7 @@ mod AegisSubscriptionVault {
 
     #[abi(embed_v0)]
     impl AegisSubscriptionVaultImpl of super::IAegisSubscriptionVault<ContractState> {
-        fn fund_subscription(
+        fn privacy_invoke(
             ref self: ContractState,
             pool_address: ContractAddress,
             token: ContractAddress,
@@ -186,7 +208,7 @@ mod AegisSubscriptionVault {
             cycles_added: u64,
             amount: u128,
             cancel_commitment: felt252,
-        ) {
+        ) -> Span<OpenNoteDeposit> {
             // Demonstrates and validates the poolAddress placeholder, same as StrkInvokeHelper.
             let caller = get_caller_address();
             assert(pool_address == caller, errors::BAD_POOL);
@@ -257,6 +279,10 @@ mod AegisSubscriptionVault {
                         is_new,
                     },
                 );
+
+            // No open note to fill - the funds stay in this contract as escrow, not shielded
+            // change handed back to the payer.
+            array![].span()
         }
 
         fn execute_cycle(ref self: ContractState, subscription_id: felt252) {

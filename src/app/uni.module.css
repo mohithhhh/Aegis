@@ -465,3 +465,54 @@
 @media (prefers-reduced-motion: reduce) {
   .btn, .connectPill, .btnCta, .tab { transition: none; }
 }
+
+/* --- Subscription vault UI (Phase 4) ------------------------------------- */
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.fieldLabel { font-size: 13px; font-weight: 600; color: var(--muted); }
+.fieldInput, .fieldSelect {
+  font-family: var(--font-body), sans-serif;
+  font-size: 15px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+}
+.fieldInput:focus, .fieldSelect:focus { border-color: var(--pink-soft-2); }
+
+.tierGrid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.tierOption {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: background 140ms, color 140ms, border-color 140ms;
+}
+.tierOption:hover { border-color: var(--pink-soft-2); }
+.tierOptionActive { border-color: var(--pink); color: var(--pink-text); background: var(--pink-soft); }
+
+.subCard {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-top: 10px;
+  background: #fff;
+}
+.subCardHead { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 14px; }
+.subCardRow { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.subCardActions { display: flex; gap: 8px; margin-top: 10px; }
+
+.statGrid { display: flex; gap: 10px; }
+.statCard { flex: 1; border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: #fff; text-align: center; }
+.statValue { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.statLabel { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+.emptyHint { font-size: 13px; color: var(--muted); text-align: center; padding: 18px 0; }

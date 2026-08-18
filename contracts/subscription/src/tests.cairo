@@ -37,7 +37,7 @@ fn deploy_token() -> (IMockErc20Dispatcher, ContractAddress) {
 }
 
 // Mints `amount` to the vault (standing in for the pool's `withdraw` action that would have
-// landed it there in the same tx) and calls `fund_subscription` as the pool.
+// landed it there in the same tx) and calls `privacy_invoke` as the pool.
 fn fund(
     vault: IAegisSubscriptionVaultDispatcher,
     token_disp: IMockErc20Dispatcher,
@@ -49,7 +49,7 @@ fn fund(
     token_disp.mint(vault.contract_address, amount.into());
     start_cheat_caller_address(vault.contract_address, pool());
     vault
-        .fund_subscription(
+        .privacy_invoke(
             pool(), token, SUB_ID, merchant(), TIER_AMOUNT, INTERVAL, cycles_added, amount,
             cancel_commitment,
         );
@@ -79,7 +79,7 @@ fn fund_rejects_non_pool_caller() {
     let (token_disp, token) = deploy_token();
     token_disp.mint(vault.contract_address, TIER_AMOUNT.into());
     start_cheat_caller_address(vault.contract_address, stranger());
-    vault.fund_subscription(pool(), token, SUB_ID, merchant(), TIER_AMOUNT, INTERVAL, 1, TIER_AMOUNT, 0);
+    vault.privacy_invoke(pool(), token, SUB_ID, merchant(), TIER_AMOUNT, INTERVAL, 1, TIER_AMOUNT, 0);
 }
 
 #[test]
@@ -91,7 +91,7 @@ fn fund_rejects_claiming_more_than_was_actually_deposited() {
     token_disp.mint(vault.contract_address, 1);
     start_cheat_caller_address(vault.contract_address, pool());
     vault
-        .fund_subscription(
+        .privacy_invoke(
             pool(), token, SUB_ID, merchant(), TIER_AMOUNT, INTERVAL, 1, TIER_AMOUNT, 0,
         );
 }
@@ -119,7 +119,7 @@ fn fund_top_up_rejects_mismatched_tier_amount() {
     token_disp.mint(vault.contract_address, (TIER_AMOUNT + 1).into());
     start_cheat_caller_address(vault.contract_address, pool());
     vault
-        .fund_subscription(
+        .privacy_invoke(
             pool(), token, SUB_ID, merchant(), TIER_AMOUNT + 1, INTERVAL, 1, TIER_AMOUNT + 1, 0,
         );
 }

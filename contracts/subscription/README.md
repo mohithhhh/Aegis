@@ -15,22 +15,25 @@ scarb test   # once tests are added
 
 | Function | Called by | Touches the privacy pool? |
 |---|---|---|
-| `fund_subscription` | The STRK20 pool's `InvokeExternal`, in the same transaction as a `withdraw` to this contract. Opens or tops up a subscription. | Yes — this is the payer-signed funding leg. |
+| `privacy_invoke` | The STRK20 pool's `InvokeExternal`, in the same transaction as a `withdraw` to this contract. Opens or tops up a subscription. | Yes — this is the payer-signed funding leg. |
 | `execute_cycle` | Anyone — keeper, merchant, or subscriber. Pays out one due cycle from escrow. | No — plain permissionless call, carries no payer-identifying data. |
 | `cancel_subscription` | Anyone holding the `secret` behind a subscription's `cancel_commitment`. Refunds unused escrow. | No. |
 | `get_subscription` / `is_due` / `total_active_subscriptions` / `total_revenue` | Anyone (views). | No. |
 
-## Calling `fund_subscription` from the SDK
+## Calling `privacy_invoke` from the wallet
 
 Same `withdraw` → `invoke` shape as the starter kit's echo helper
-(`WalletAccountV6Tag.tsx`), with our own entrypoint and calldata:
+(`WalletAccountV6Tag.tsx`). The entrypoint **must** be named `privacy_invoke` —
+`WALLET_API.STRK20_INVOKE_ACTION` (`@starknet-io/types-js`) has no `entrypoint`
+field, so the wallet always calls that exact name on whatever `contract` you
+target. Our calldata (everything after `self`) is entirely our own:
 
 ```ts
 const actions: WALLET_API.STRK20_ACTION[] = [
   { type: "withdraw", token: TOKEN, amount: num.toHex(amount), recipient: vaultAddress },
   {
     type: "invoke",
-    contract: vaultAddress,
+    contract: vaultAddress, // entrypoint is implicit - always privacy_invoke
     calldata: [
       "${poolAddress}",           // substituted by the wallet — do not hex-normalize
       num.toHex(TOKEN),
@@ -45,6 +48,13 @@ const actions: WALLET_API.STRK20_ACTION[] = [
   },
 ];
 ```
+
+The real, lower-level `@starkware-libs/starknet-privacy-sdk` TS package *does*
+support an arbitrary `entrypoint` in its `invoke()` builder (see the Ekubo/Vesu
+anonymizer examples in its README) — but it isn't published to npm and needs a
+proving-service round trip this project doesn't have access to, so it wasn't a
+realistic option here. The wallet-standard's fixed-name constraint is the actual
+governing interface for this hackathon build.
 
 ## Not yet implemented (tracked for later phases)
 

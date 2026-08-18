@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import styles from './uni.module.css';
 import SelectWallet from './components/client/WalletHandle/SelectWallet';
 import WalletAccountV6Tag from './components/client/WalletHandle/WalletAccountV6Tag';
+import SubscriptionPanel from './components/client/Subscription/SubscriptionPanel';
 import { StrkCoin, BtcCoin, EthCoin, UsdcCoin, ZecCoin } from './components/TokenIcons';
 
 // Scattered, blurred token coins on the sides of the page (background ambience).
@@ -70,6 +71,11 @@ export default function Page() {
 
       <main>
         <WalletAccountV6Tag />
+        <div style={{ height: 40 }} />
+        <h2 style={{ textAlign: 'center', fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: 16 }}>
+          Subscriptions
+        </h2>
+        <SubscriptionPanel />
       </main>
 
       <footer className={styles.footer}>

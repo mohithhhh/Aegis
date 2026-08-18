@@ -107,12 +107,13 @@ splits into two legs with very different trust/automation properties:
   is the only leg that ever touches the payer's shielded balance, so it's the
   only leg that *requires* the payer to be present.
 - **Release leg** (permissionless, plain contract call): `execute_cycle(subscription_id)`
-  moves already-escrowed STRK from the Aegis contract to the merchant (via an
-  open-note deposit). It needs zero information about the payer — just the
-  public `subscription_id` and enough elapsed time — so **anyone can call it
-  safely**: a keeper bot, the merchant, or the subscriber. This leg genuinely is
-  privacy-preserving to automate, because it was never carrying payer identity
-  in the first place.
+  moves already-escrowed STRK from the Aegis contract to the merchant (a plain
+  ERC20 transfer in the current implementation — see "not yet implemented" in
+  `contracts/subscription/README.md` for why it isn't an open-note deposit yet).
+  It needs zero information about the payer — just the public `subscription_id`
+  and enough elapsed time — so **anyone can call it safely**: a keeper bot, the
+  merchant, or the subscriber. This leg genuinely is privacy-preserving to
+  automate, because it was never carrying payer identity in the first place.
 
 That split gives two shippable models, both using the same contract fields:
 
@@ -140,14 +141,29 @@ automation is hard (no delegation primitive in the pool, not a privacy leak) and
 a concrete reason it's still worth attempting as a stretch (the release leg was
 always safe to automate; only the funding leg was ever the blocker).
 
-## Open questions for Phase 2
+## Resolved during Phase 4: the funding entrypoint's name is not a choice
+
+The frontend has to submit the funding leg through the wallet the starter kit
+actually integrates (`WalletAccountV6` / Ready), not the raw `starknet-privacy`
+SDK — that SDK's `invoke()` builder does support an arbitrary `entrypoint` (see
+the Ekubo/Vesu anonymizer examples in its README), but it isn't published to npm
+and needs a proving-service round trip this project has no access to. The
+wallet-standard's `WALLET_API.STRK20_INVOKE_ACTION` (`@starknet-io/types-js`) has
+no `entrypoint` field at all — it always calls a contract's `privacy_invoke`,
+confirmed by `StrkInvokeHelper`'s own docstring
+(`"Called by the privacy pool via selector!(\"privacy_invoke\")"`). So the Aegis
+vault's funding entrypoint is named `privacy_invoke`, not `fund_subscription` as
+first written — everything else about it (params, checks, escrow accounting) is
+unchanged. See `contracts/subscription/README.md` for the corrected call shape.
+
+## Open questions for Phase 2 / still open
 
 - Whether to build the Aegis contract directly against `InvokeExternal` (like
-  `StrkInvokeHelper` in the starter kit) or on top of the generic, already-audited
-  `ShadowAccountAnonymizer` package (per-subscription shadow accounts via
-  `identity_commitment`) — the latter is more "integration depth" (30% of
-  judging) but needs checking whether it's deployed on Sepolia/Mainnet or needs
-  its own deployment.
+  `StrkInvokeHelper` in the starter kit — what's implemented now) or on top of
+  the generic, already-audited `ShadowAccountAnonymizer` package (per-subscription
+  shadow accounts via `identity_commitment`) — the latter is more "integration
+  depth" (30% of judging) but needs checking whether it's deployed on
+  Sepolia/Mainnet or needs its own deployment.
 - Exact cancellation / refund mechanics for the prepaid stretch variant.
 - Fee handling: the pool takes a STRK fee per `apply_actions` call
   (`get_fee_amount`) — who pays it on the funding leg (subscriber, presumably)
