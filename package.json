@@ -6,7 +6,8 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "keeper": "tsx keeper/execute-cycles.ts"
   },
   "dependencies": {
     "@starknet-io/get-starknet-discovery": "6.0.2",
@@ -22,6 +23,7 @@
     "@starknet-io/types-js": "0.10.3",
     "@types/node": "24.10.2",
     "@types/react": "19.2.7",
+    "tsx": "^4.20.7",
     "typescript": "^5.9.3"
   }
 }

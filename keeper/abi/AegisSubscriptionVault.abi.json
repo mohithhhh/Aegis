@@ -1,0 +1,324 @@
+[
+  {
+    "type": "impl",
+    "name": "AegisSubscriptionVaultImpl",
+    "interface_name": "aegis_subscription_vault::IAegisSubscriptionVault"
+  },
+  {
+    "type": "enum",
+    "name": "aegis_subscription_vault::SubscriptionStatus",
+    "variants": [
+      {
+        "name": "Active",
+        "type": "()"
+      },
+      {
+        "name": "Cancelled",
+        "type": "()"
+      },
+      {
+        "name": "Completed",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "aegis_subscription_vault::Subscription",
+    "members": [
+      {
+        "name": "merchant",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "token",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "tier_amount",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "interval_seconds",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "cycles_total",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "cycles_executed",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "next_due_at",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "escrow_balance",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "cancel_commitment",
+        "type": "core::felt252"
+      },
+      {
+        "name": "status",
+        "type": "aegis_subscription_vault::SubscriptionStatus"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::bool",
+    "variants": [
+      {
+        "name": "False",
+        "type": "()"
+      },
+      {
+        "name": "True",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "aegis_subscription_vault::IAegisSubscriptionVault",
+    "items": [
+      {
+        "type": "function",
+        "name": "fund_subscription",
+        "inputs": [
+          {
+            "name": "pool_address",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "token",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "subscription_id",
+            "type": "core::felt252"
+          },
+          {
+            "name": "merchant",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "tier_amount",
+            "type": "core::integer::u128"
+          },
+          {
+            "name": "interval_seconds",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "cycles_added",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "amount",
+            "type": "core::integer::u128"
+          },
+          {
+            "name": "cancel_commitment",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "execute_cycle",
+        "inputs": [
+          {
+            "name": "subscription_id",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "cancel_subscription",
+        "inputs": [
+          {
+            "name": "subscription_id",
+            "type": "core::felt252"
+          },
+          {
+            "name": "secret",
+            "type": "core::felt252"
+          },
+          {
+            "name": "refund_to",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_subscription",
+        "inputs": [
+          {
+            "name": "subscription_id",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "aegis_subscription_vault::Subscription"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "is_due",
+        "inputs": [
+          {
+            "name": "subscription_id",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "total_active_subscriptions",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u64"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "total_revenue",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u128"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "aegis_subscription_vault::AegisSubscriptionVault::SubscriptionFunded",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "subscription_id",
+        "type": "core::felt252",
+        "kind": "key"
+      },
+      {
+        "name": "merchant",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      },
+      {
+        "name": "tier_amount",
+        "type": "core::integer::u128",
+        "kind": "data"
+      },
+      {
+        "name": "interval_seconds",
+        "type": "core::integer::u64",
+        "kind": "data"
+      },
+      {
+        "name": "cycles_added",
+        "type": "core::integer::u64",
+        "kind": "data"
+      },
+      {
+        "name": "cycles_total",
+        "type": "core::integer::u64",
+        "kind": "data"
+      },
+      {
+        "name": "is_new",
+        "type": "core::bool",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "aegis_subscription_vault::AegisSubscriptionVault::CycleExecuted",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "subscription_id",
+        "type": "core::felt252",
+        "kind": "key"
+      },
+      {
+        "name": "cycles_executed",
+        "type": "core::integer::u64",
+        "kind": "data"
+      },
+      {
+        "name": "cycles_total",
+        "type": "core::integer::u64",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "aegis_subscription_vault::AegisSubscriptionVault::SubscriptionCancelled",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "subscription_id",
+        "type": "core::felt252",
+        "kind": "key"
+      },
+      {
+        "name": "refunded",
+        "type": "core::integer::u128",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "aegis_subscription_vault::AegisSubscriptionVault::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "SubscriptionFunded",
+        "type": "aegis_subscription_vault::AegisSubscriptionVault::SubscriptionFunded",
+        "kind": "nested"
+      },
+      {
+        "name": "CycleExecuted",
+        "type": "aegis_subscription_vault::AegisSubscriptionVault::CycleExecuted",
+        "kind": "nested"
+      },
+      {
+        "name": "SubscriptionCancelled",
+        "type": "aegis_subscription_vault::AegisSubscriptionVault::SubscriptionCancelled",
+        "kind": "nested"
+      }
+    ]
+  }
+]
