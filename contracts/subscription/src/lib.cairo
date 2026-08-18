@@ -20,6 +20,10 @@
 
 use starknet::ContractAddress;
 
+pub mod test_utils_contracts;
+#[cfg(test)]
+mod tests;
+
 #[starknet::interface]
 pub trait IErc20<TState> {
     fn balance_of(self: @TState, account: ContractAddress) -> u256;
@@ -29,6 +33,11 @@ pub trait IErc20<TState> {
 #[derive(Serde, Copy, Drop, PartialEq, Debug, starknet::Store)]
 pub enum SubscriptionStatus {
     Active,
+    // Default variant for an unwritten storage slot. All entrypoints go through the `exists`
+    // map before ever reading a `Subscription`, so this is never actually observed - it's
+    // picked as the default (rather than `Active`) purely so that an unguarded read fails
+    // closed (looks cancelled, not payable) instead of failing open.
+    #[default]
     Cancelled,
     Completed,
 }
